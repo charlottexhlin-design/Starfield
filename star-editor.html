@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Stellar Registry — Star Editor</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap');
+
+  :root {
+    --bg: #04060f;
+    --bg2: #090d1c;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #e8e4d8;
+    --muted: rgba(232,228,216,0.45);
+    --accent: #a78bfa;
+    --accent2: #7dd3fc;
+    --gold: #fbbf24;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; background: var(--bg); }
+
+  body {
+    font-family: 'Space Mono', monospace;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+  }
+
+  canvas#preview {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+  }
+
+  .ui {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    pointer-events: none;
+  }
+
+  .top-bar {
+    padding: 16px 20px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    pointer-events: auto;
+  }
+
+  .logo {
+    font-family: 'Crimson Pro', serif;
+    font-style: italic;
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--text);
+    opacity: 0.8;
+  }
+
+  .phase-tag {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 0.5px solid var(--border2);
+    padding: 4px 10px;
+    border-radius: 99px;
+  }
+
+  .spacer { flex: 1; }
+
+  .panel {
+    pointer-events: auto;
+    background: linear-gradient(to top, rgba(4,6,15,0.98) 80%, rgba(4,6,15,0.6));
+    padding: 20px 20px 0;
+    max-height: 62dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  .panel::-webkit-scrollbar { display: none; }
+
+  .section-label {
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  .sliders-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0 16px;
+    margin-bottom: 20px;
+  }
+
+  .slider-row {
+    margin-bottom: 14px;
+  }
+
+  .slider-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+
+  .slider-name {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+  }
+
+  .slider-val {
+    font-size: 11px;
+    color: var(--accent);
+    min-width: 28px;
+    text-align: right;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 2px;
+    background: var(--border2);
+    border-radius: 2px;
+    outline: none;
+  }
+
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 8px rgba(167,139,250,0.6);
+    transition: transform 0.1s;
+  }
+
+  input[type=range]:active::-webkit-slider-thumb { transform: scale(1.25); }
+
+  .color-section {
+    margin-bottom: 20px;
+  }
+
+  .color-swatches {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.15s, border-color 0.15s;
+  }
+
+  .swatch:active { transform: scale(0.9); }
+  .swatch.active { border-color: white; transform: scale(1.1); }
+
+  .text-section { margin-bottom: 16px; }
+
+  input[type=text], textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 0.5px solid var(--border2);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    font-size: 15px;
+    font-weight: 300;
+    padding: 12px 14px;
+    outline: none;
+    resize: none;
+    -webkit-appearance: none;
+    margin-bottom: 10px;
+    transition: border-color 0.2s;
+  }
+
+  input[type=text]:focus, textarea:focus {
+    border-color: var(--accent);
+  }
+
+  input[type=text]::placeholder, textarea::placeholder {
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  textarea { height: 68px; line-height: 1.5; }
+
+  .launch-area {
+    pointer-events: auto;
+    padding: 12px 20px 24px;
+    background: rgba(4,6,15,0.98);
+  }
+
+  .launch-btn {
+    width: 100%;
+    padding: 16px;
+    background: transparent;
+    border: 0.5px solid var(--border2);
+    border-radius: 14px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .launch-btn:hover { border-color: var(--accent); }
+
+  .launch-btn.ready {
+    border-color: var(--accent);
+    background: rgba(167,139,250,0.08);
+  }
+
+  .launch-btn .btn-glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 120%, rgba(167,139,250,0.3) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .launch-btn.ready .btn-glow { opacity: 1; }
+  .launch-btn.fired { animation: fire-flash 0.5s ease-out; }
+
+  @keyframes fire-flash {
+    0% { background: rgba(167,139,250,0.4); }
+    100% { background: transparent; }
+  }
+
+  .toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.8);
+    background: rgba(4,6,15,0.95);
+    border: 0.5px solid var(--accent);
+    border-radius: 16px;
+    padding: 24px 32px;
+    text-align: center;
+    z-index: 100;
+    pointer-events: none;
+    opacity: 0;
+    transition: all 0.3s;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  .toast-emoji { font-size: 32px; margin-bottom: 8px; }
+  .toast-title { font-family: 'Crimson Pro', serif; font-style: italic; font-size: 20px; margin-bottom: 4px; }
+  .toast-sub { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; }
+
+  .divider {
+    height: 0.5px;
+    background: var(--border);
+    margin: 4px 0 16px;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="preview"></canvas>
+
+<div class="ui">
+  <div class="top-bar">
+    <div class="logo">Stellar Registry</div>
+    <div class="phase-tag">Star Editor</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="panel">
+    <div class="section-label">Physics Parameters</div>
+    <div class="sliders-grid">
+      <div class="slider-row">
+        <div class="slider-header">
+          <span class="slider-name">Particle Count</span>
+          <span class="slider-val" id="val-count">80</span>
+        </div>
+        <input type="range" id="sl-count" min="20" max="200" value="80" step="1">
+      </div>
+      <div class="slider-row">
+        <div class="slider-header">
+          <span class="slider-name">Core Density</span>
+          <span class="slider-val" id="val-density">0.6</span>
+        </div>
+        <input type="range" id="sl-density" min="0.1" max="1.0" value="0.6" step="0.01">
+      </div>
+      <div class="slider-row">
+        <div class="slider-header">
+          <span class="slider-name">Orbital Speed</span>
+          <span class="slider-val" id="val-speed">0.5</span>
+        </div>
+        <input type="range" id="sl-speed" min="0.05" max="2.0" value="0.5" step="0.01">
+      </div>
+      <div class="slider-row">
+        <div class="slider-header">
+          <span class="slider-name">Scatter Radius</span>
+          <span class="slider-val" id="val-scatter">60</span>
+        </div>
+        <input type="range" id="sl-scatter" min="20" max="120" value="60" step="1">
+      </div>
+      <div class="slider-row">
+        <div class="slider-header">
+          <span class="slider-name">Luminosity</span>
+          <span class="slider-val" id="val-lum">0.8</span>
+        </div>
+        <input type="range" id="sl-lum" min="0.2" max="1.0" value="0.8" step="0.01">
+      </div>
+      <div class="slider-row">
+        <div class="slider-header">
+          <span class="slider-name">Twinkle Rate</span>
+          <span class="slider-val" id="val-twinkle">0.5</span>
+        </div>
+        <input type="range" id="sl-twinkle" min="0.0" max="1.0" value="0.5" step="0.01">
+      </div>
+      <div class="slider-row">
+        <div class="slider-header">
+          <span class="slider-name">Arm Twist</span>
+          <span class="slider-val" id="val-twist">0.4</span>
+        </div>
+        <input type="range" id="sl-twist" min="0.0" max="1.5" value="0.4" step="0.01">
+      </div>
+      <div class="slider-row">
+        <div class="slider-header">
+          <span class="slider-name">Nebula Haze</span>
+          <span class="slider-val" id="val-haze">0.3</span>
+        </div>
+        <input type="range" id="sl-haze" min="0.0" max="1.0" value="0.3" step="0.01">
+      </div>
+    </div>
+
+    <div class="color-section">
+      <div class="section-label">Star Color</div>
+      <div class="color-swatches" id="swatches">
+        <div class="swatch active" data-color="#a78bfa" style="background:#a78bfa"></div>
+        <div class="swatch" data-color="#7dd3fc" style="background:#7dd3fc"></div>
+        <div class="swatch" data-color="#fbbf24" style="background:#fbbf24"></div>
+        <div class="swatch" data-color="#f472b6" style="background:#f472b6"></div>
+        <div class="swatch" data-color="#34d399" style="background:#34d399"></div>
+        <div class="swatch" data-color="#fb923c" style="background:#fb923c"></div>
+        <div class="swatch" data-color="#f87171" style="background:#f87171"></div>
+        <div class="swatch" data-color="#e8e4d8" style="background:#e8e4d8"></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="section-label">Register Your Star</div>
+    <div class="text-section">
+      <input type="text" id="star-name" placeholder="Name your star…" maxlength="40">
+      <input type="text" id="creator-name" placeholder="Your name…" maxlength="30">
+      <textarea id="star-desc" placeholder="Describe your star — its nature, its myth, its light…" maxlength="200"></textarea>
+    </div>
+  </div>
+
+  <div class="launch-area">
+    <button class="launch-btn" id="launch-btn" onclick="launchStar()">
+      <div class="btn-glow"></div>
+      <span id="btn-text">— Shoot the Star —</span>
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <div class="toast-emoji">✦</div>
+  <div class="toast-title" id="toast-name">Star Launched</div>
+  <div class="toast-sub">Now visible in the Observatory</div>
+</div>
+
+<script>
+const canvas = document.getElementById('preview');
+const ctx = canvas.getContext('2d');
+let W, H, cx, cy;
+let particles = [];
+let animFrame;
+let selectedColor = '#a78bfa';
+let t = 0;
+
+const params = {
+  count: 80,
+  density: 0.6,
+  speed: 0.5,
+  scatter: 60,
+  lum: 0.8,
+  twinkle: 0.5,
+  twist: 0.4,
+  haze: 0.3
+};
+
+function resize() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  cx = W / 2;
+  cy = H * 0.35;
+  buildParticles();
+}
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return {r, g, b};
+}
+
+function buildParticles() {
+  particles = [];
+  const n = params.count;
+  const rgb = hexToRgb(selectedColor);
+
+  for (let i = 0; i < n; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const rawR = Math.pow(Math.random(), 1 / params.density);
+    const r = rawR * params.scatter;
+    const armOffset = params.twist * rawR * Math.PI * 3;
+    const finalAngle = angle + armOffset;
+
+    particles.push({
+      baseX: Math.cos(finalAngle) * r,
+      baseY: Math.sin(finalAngle) * r * 0.6,
+      r: Math.random() * 1.4 + 0.3,
+      speed: (Math.random() * 0.5 + 0.5) * params.speed * 0.008,
+      phaseOffset: Math.random() * Math.PI * 2,
+      twinklePhase: Math.random() * Math.PI * 2,
+      depth: Math.random(),
+      rgb: {
+        r: Math.min(255, rgb.r + Math.floor((Math.random()-0.5)*60)),
+        g: Math.min(255, rgb.g + Math.floor((Math.random()-0.5)*60)),
+        b: Math.min(255, rgb.b + Math.floor((Math.random()-0.5)*60))
+      }
+    });
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, W, H);
+
+  // Nebula haze
+  if (params.haze > 0.05) {
+    const rgb = hexToRgb(selectedColor);
+    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, params.scatter * 1.4);
+    g.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},${params.haze * 0.18})`);
+    g.addColorStop(0.4, `rgba(${rgb.r},${rgb.g},${rgb.b},${params.haze * 0.08})`);
+    g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, params.scatter * 1.6, params.scatter, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Core glow
+  const rgb = hexToRgb(selectedColor);
+  const coreSize = params.scatter * 0.25 * params.density;
+  const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreSize);
+  cg.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},${params.lum * 0.6})`);
+  cg.addColorStop(0.5, `rgba(${rgb.r},${rgb.g},${rgb.b},${params.lum * 0.2})`);
+  cg.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = cg;
+  ctx.beginPath();
+  ctx.arc(cx, cy, coreSize, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Particles
+  for (const p of particles) {
+    const orbit = t * p.speed;
+    const x = cx + p.baseX * Math.cos(orbit) - p.baseY * Math.sin(orbit) * 0.5;
+    const y = cy + p.baseX * Math.sin(orbit) * 0.4 + p.baseY * Math.cos(orbit);
+
+    const twinkleFactor = params.twinkle > 0.01
+      ? 0.6 + 0.4 * Math.sin(t * (0.5 + p.depth) * params.twinkle * 3 + p.twinklePhase)
+      : 1;
+    const alpha = params.lum * twinkleFactor * (0.5 + p.depth * 0.5);
+
+    ctx.beginPath();
+    ctx.arc(x, y, p.r * (1 + p.depth * 0.5), 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${p.rgb.r},${p.rgb.g},${p.rgb.b},${alpha})`;
+    ctx.fill();
+
+    // Bright core particle highlight
+    if (p.depth > 0.7) {
+      ctx.beginPath();
+      ctx.arc(x, y, p.r * 0.4, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(255,255,255,${alpha * 0.7})`;
+      ctx.fill();
+    }
+  }
+
+  t++;
+  animFrame = requestAnimationFrame(draw);
+}
+
+// Slider bindings
+const sliders = [
+  ['count', 1], ['density', 2], ['speed', 2],
+  ['scatter', 0], ['lum', 2], ['twinkle', 2],
+  ['twist', 2], ['haze', 2]
+];
+
+sliders.forEach(([name, dec]) => {
+  const sl = document.getElementById('sl-' + name);
+  const val = document.getElementById('val-' + name);
+  sl.addEventListener('input', () => {
+    const v = parseFloat(sl.value);
+    params[name] = v;
+    val.textContent = v.toFixed(dec);
+    buildParticles();
+  });
+});
+
+// Swatch bindings
+document.querySelectorAll('.swatch').forEach(sw => {
+  sw.addEventListener('click', () => {
+    document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+    sw.classList.add('active');
+    selectedColor = sw.dataset.color;
+    buildParticles();
+  });
+});
+
+// Input validation for launch button
+function checkReady() {
+  const name = document.getElementById('star-name').value.trim();
+  const creator = document.getElementById('creator-name').value.trim();
+  const btn = document.getElementById('launch-btn');
+  if (name.length > 0 && creator.length > 0) {
+    btn.classList.add('ready');
+  } else {
+    btn.classList.remove('ready');
+  }
+}
+
+document.getElementById('star-name').addEventListener('input', checkReady);
+document.getElementById('creator-name').addEventListener('input', checkReady);
+
+async function launchStar() {
+  const name = document.getElementById('star-name').value.trim();
+  const creator = document.getElementById('creator-name').value.trim();
+  const desc = document.getElementById('star-desc').value.trim();
+
+  if (!name || !creator) {
+    document.getElementById('star-name').focus();
+    return;
+  }
+
+  const btn = document.getElementById('launch-btn');
+  document.getElementById('btn-text').textContent = 'Launching…';
+  btn.disabled = true;
+
+  const starData = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name,
+    creator,
+    description: desc || 'A star without words — its light speaks for itself.',
+    color: selectedColor,
+    physics: { ...params },
+    createdAt: Date.now(),
+    x: Math.random() * 0.85 + 0.075,
+    y: Math.random() * 0.7 + 0.1
+  };
+
+  try {
+    const storageKey = 'stellar-registry-stars';
+    let stars = [];
+
+    // Load existing
+    try {
+      const existing = await window.storage?.get(storageKey, true);
+      if (existing?.value) stars = JSON.parse(existing.value);
+    } catch(e) {}
+
+    // Keep last 200
+    stars = stars.slice(-199);
+    stars.push(starData);
+
+    await window.storage?.set(storageKey, JSON.stringify(stars), true);
+
+    // Show toast
+    document.getElementById('toast-name').textContent = name;
+    const toast = document.getElementById('toast');
+    toast.classList.add('show');
+    btn.classList.add('fired');
+
+    setTimeout(() => {
+      toast.classList.remove('show');
+      document.getElementById('btn-text').textContent = '— Shoot Another Star —';
+      btn.disabled = false;
+      document.getElementById('star-name').value = '';
+      document.getElementById('creator-name').value = '';
+      document.getElementById('star-desc').value = '';
+      btn.classList.remove('ready', 'fired');
+    }, 2800);
+
+  } catch(e) {
+    document.getElementById('btn-text').textContent = '— Shoot the Star —';
+    btn.disabled = false;
+    alert('Could not reach the registry. Please try again.');
+  }
+}
+
+window.addEventListener('resize', resize);
+resize();
+draw();
+</script>
+</body>
+</html>
