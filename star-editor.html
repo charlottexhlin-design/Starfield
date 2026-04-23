@@ -3,21 +3,19 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:;">
 <title>Stellar Registry — Star Editor</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap');
 
   :root {
     --bg: #04060f;
-    --bg2: #090d1c;
     --surface: rgba(255,255,255,0.04);
     --border: rgba(255,255,255,0.08);
     --border2: rgba(255,255,255,0.14);
     --text: #e8e4d8;
     --muted: rgba(232,228,216,0.45);
     --accent: #a78bfa;
-    --accent2: #7dd3fc;
-    --gold: #fbbf24;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -61,7 +59,6 @@
     font-style: italic;
     font-size: 18px;
     font-weight: 300;
-    color: var(--text);
     opacity: 0.8;
   }
 
@@ -79,12 +76,11 @@
 
   .panel {
     pointer-events: auto;
-    background: linear-gradient(to top, rgba(4,6,15,0.98) 80%, rgba(4,6,15,0.6));
+    background: linear-gradient(to top, rgba(4,6,15,0.98) 80%, rgba(4,6,15,0.55));
     padding: 20px 20px 0;
     max-height: 62dvh;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
   }
 
   .panel::-webkit-scrollbar { display: none; }
@@ -104,9 +100,7 @@
     margin-bottom: 20px;
   }
 
-  .slider-row {
-    margin-bottom: 14px;
-  }
+  .slider-row { margin-bottom: 14px; }
 
   .slider-header {
     display: flex;
@@ -115,18 +109,8 @@
     margin-bottom: 6px;
   }
 
-  .slider-name {
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 0.06em;
-  }
-
-  .slider-val {
-    font-size: 11px;
-    color: var(--accent);
-    min-width: 28px;
-    text-align: right;
-  }
+  .slider-name { font-size: 10px; color: var(--muted); letter-spacing: 0.06em; }
+  .slider-val { font-size: 11px; color: var(--accent); min-width: 28px; text-align: right; }
 
   input[type=range] {
     -webkit-appearance: none;
@@ -139,38 +123,32 @@
 
   input[type=range]::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     border-radius: 50%;
     background: var(--accent);
     cursor: pointer;
-    box-shadow: 0 0 8px rgba(167,139,250,0.6);
+    box-shadow: 0 0 8px rgba(167,139,250,0.5);
     transition: transform 0.1s;
   }
 
-  input[type=range]:active::-webkit-slider-thumb { transform: scale(1.25); }
+  input[type=range]:active::-webkit-slider-thumb { transform: scale(1.3); }
 
-  .color-section {
-    margin-bottom: 20px;
-  }
-
-  .color-swatches {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
+  .color-section { margin-bottom: 20px; }
+  .color-swatches { display: flex; gap: 10px; flex-wrap: wrap; }
 
   .swatch {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     cursor: pointer;
     border: 2px solid transparent;
     transition: transform 0.15s, border-color 0.15s;
+    flex-shrink: 0;
   }
 
-  .swatch:active { transform: scale(0.9); }
-  .swatch.active { border-color: white; transform: scale(1.1); }
+  .swatch:active { transform: scale(0.88); }
+  .swatch.active { border-color: rgba(255,255,255,0.9); transform: scale(1.12); }
 
   .text-section { margin-bottom: 16px; }
 
@@ -189,22 +167,16 @@
     -webkit-appearance: none;
     margin-bottom: 10px;
     transition: border-color 0.2s;
+    display: block;
   }
 
-  input[type=text]:focus, textarea:focus {
-    border-color: var(--accent);
-  }
-
-  input[type=text]::placeholder, textarea::placeholder {
-    color: var(--muted);
-    font-style: italic;
-  }
-
-  textarea { height: 68px; line-height: 1.5; }
+  input[type=text]:focus, textarea:focus { border-color: var(--accent); }
+  input[type=text]::placeholder, textarea::placeholder { color: var(--muted); font-style: italic; }
+  textarea { height: 72px; line-height: 1.5; }
 
   .launch-area {
     pointer-events: auto;
-    padding: 12px 20px 24px;
+    padding: 12px 20px 28px;
     background: rgba(4,6,15,0.98);
   }
 
@@ -222,62 +194,61 @@
     cursor: pointer;
     position: relative;
     overflow: hidden;
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, background 0.2s;
   }
 
-  .launch-btn:hover { border-color: var(--accent); }
+  .launch-btn:disabled { opacity: 0.45; cursor: default; }
+  .launch-btn.ready { border-color: var(--accent); background: rgba(167,139,250,0.07); }
 
-  .launch-btn.ready {
-    border-color: var(--accent);
-    background: rgba(167,139,250,0.08);
-  }
-
-  .launch-btn .btn-glow {
+  .btn-glow {
     position: absolute;
     inset: 0;
-    background: radial-gradient(ellipse at 50% 120%, rgba(167,139,250,0.3) 0%, transparent 70%);
+    background: radial-gradient(ellipse at 50% 130%, rgba(167,139,250,0.35) 0%, transparent 65%);
     opacity: 0;
     transition: opacity 0.3s;
+    pointer-events: none;
   }
 
   .launch-btn.ready .btn-glow { opacity: 1; }
-  .launch-btn.fired { animation: fire-flash 0.5s ease-out; }
 
-  @keyframes fire-flash {
-    0% { background: rgba(167,139,250,0.4); }
-    100% { background: transparent; }
+  .error-msg {
+    font-size: 10px;
+    color: #f87171;
+    text-align: center;
+    margin-top: 10px;
+    min-height: 14px;
+    letter-spacing: 0.04em;
   }
+
+  .divider { height: 0.5px; background: var(--border); margin: 4px 0 16px; }
 
   .toast {
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) scale(0.8);
-    background: rgba(4,6,15,0.95);
+    transform: translate(-50%, -50%) scale(0.82);
+    background: rgba(4,6,15,0.96);
     border: 0.5px solid var(--accent);
-    border-radius: 16px;
-    padding: 24px 32px;
+    border-radius: 20px;
+    padding: 30px 40px;
     text-align: center;
-    z-index: 100;
+    z-index: 200;
     pointer-events: none;
     opacity: 0;
-    transition: all 0.3s;
+    transition: all 0.35s cubic-bezier(0.16,1,0.3,1);
+    min-width: 230px;
   }
 
-  .toast.show {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+  .toast.show { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  .toast-star { font-size: 38px; margin-bottom: 10px; }
+  .toast-title {
+    font-family: 'Crimson Pro', serif;
+    font-style: italic;
+    font-size: 24px;
+    font-weight: 300;
+    margin-bottom: 6px;
   }
-
-  .toast-emoji { font-size: 32px; margin-bottom: 8px; }
-  .toast-title { font-family: 'Crimson Pro', serif; font-style: italic; font-size: 20px; margin-bottom: 4px; }
-  .toast-sub { font-size: 10px; color: var(--muted); letter-spacing: 0.1em; }
-
-  .divider {
-    height: 0.5px;
-    background: var(--border);
-    margin: 4px 0 16px;
-  }
+  .toast-sub { font-size: 9px; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
 </style>
 </head>
 <body>
@@ -294,66 +265,42 @@
     <div class="section-label">Physics Parameters</div>
     <div class="sliders-grid">
       <div class="slider-row">
-        <div class="slider-header">
-          <span class="slider-name">Particle Count</span>
-          <span class="slider-val" id="val-count">80</span>
-        </div>
+        <div class="slider-header"><span class="slider-name">Particle Count</span><span class="slider-val" id="val-count">80</span></div>
         <input type="range" id="sl-count" min="20" max="200" value="80" step="1">
       </div>
       <div class="slider-row">
-        <div class="slider-header">
-          <span class="slider-name">Core Density</span>
-          <span class="slider-val" id="val-density">0.6</span>
-        </div>
+        <div class="slider-header"><span class="slider-name">Core Density</span><span class="slider-val" id="val-density">0.60</span></div>
         <input type="range" id="sl-density" min="0.1" max="1.0" value="0.6" step="0.01">
       </div>
       <div class="slider-row">
-        <div class="slider-header">
-          <span class="slider-name">Orbital Speed</span>
-          <span class="slider-val" id="val-speed">0.5</span>
-        </div>
+        <div class="slider-header"><span class="slider-name">Orbital Speed</span><span class="slider-val" id="val-speed">0.50</span></div>
         <input type="range" id="sl-speed" min="0.05" max="2.0" value="0.5" step="0.01">
       </div>
       <div class="slider-row">
-        <div class="slider-header">
-          <span class="slider-name">Scatter Radius</span>
-          <span class="slider-val" id="val-scatter">60</span>
-        </div>
+        <div class="slider-header"><span class="slider-name">Scatter Radius</span><span class="slider-val" id="val-scatter">60</span></div>
         <input type="range" id="sl-scatter" min="20" max="120" value="60" step="1">
       </div>
       <div class="slider-row">
-        <div class="slider-header">
-          <span class="slider-name">Luminosity</span>
-          <span class="slider-val" id="val-lum">0.8</span>
-        </div>
+        <div class="slider-header"><span class="slider-name">Luminosity</span><span class="slider-val" id="val-lum">0.80</span></div>
         <input type="range" id="sl-lum" min="0.2" max="1.0" value="0.8" step="0.01">
       </div>
       <div class="slider-row">
-        <div class="slider-header">
-          <span class="slider-name">Twinkle Rate</span>
-          <span class="slider-val" id="val-twinkle">0.5</span>
-        </div>
+        <div class="slider-header"><span class="slider-name">Twinkle Rate</span><span class="slider-val" id="val-twinkle">0.50</span></div>
         <input type="range" id="sl-twinkle" min="0.0" max="1.0" value="0.5" step="0.01">
       </div>
       <div class="slider-row">
-        <div class="slider-header">
-          <span class="slider-name">Arm Twist</span>
-          <span class="slider-val" id="val-twist">0.4</span>
-        </div>
+        <div class="slider-header"><span class="slider-name">Arm Twist</span><span class="slider-val" id="val-twist">0.40</span></div>
         <input type="range" id="sl-twist" min="0.0" max="1.5" value="0.4" step="0.01">
       </div>
       <div class="slider-row">
-        <div class="slider-header">
-          <span class="slider-name">Nebula Haze</span>
-          <span class="slider-val" id="val-haze">0.3</span>
-        </div>
+        <div class="slider-header"><span class="slider-name">Nebula Haze</span><span class="slider-val" id="val-haze">0.30</span></div>
         <input type="range" id="sl-haze" min="0.0" max="1.0" value="0.3" step="0.01">
       </div>
     </div>
 
     <div class="color-section">
       <div class="section-label">Star Color</div>
-      <div class="color-swatches" id="swatches">
+      <div class="color-swatches">
         <div class="swatch active" data-color="#a78bfa" style="background:#a78bfa"></div>
         <div class="swatch" data-color="#7dd3fc" style="background:#7dd3fc"></div>
         <div class="swatch" data-color="#fbbf24" style="background:#fbbf24"></div>
@@ -379,68 +326,60 @@
       <div class="btn-glow"></div>
       <span id="btn-text">— Shoot the Star —</span>
     </button>
+    <div class="error-msg" id="error-msg"></div>
   </div>
 </div>
 
 <div class="toast" id="toast">
-  <div class="toast-emoji">✦</div>
+  <div class="toast-star">✦</div>
   <div class="toast-title" id="toast-name">Star Launched</div>
   <div class="toast-sub">Now visible in the Observatory</div>
 </div>
 
 <script>
-const canvas = document.getElementById('preview');
-const ctx = canvas.getContext('2d');
-let W, H, cx, cy;
-let particles = [];
-let animFrame;
-let selectedColor = '#a78bfa';
-let t = 0;
+var SUPABASE_URL = 'https://xdvztmxhfzeugxumdlwh.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhkdnp0bXhoZnpldWd4dW1kbHdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MzA5MzMsImV4cCI6MjA5MjUwNjkzM30.t_KiA17-MRHvlHVoxBEHdvJW7KWfPk6Gwn8_ZyfIeTI';
 
-const params = {
-  count: 80,
-  density: 0.6,
-  speed: 0.5,
-  scatter: 60,
-  lum: 0.8,
-  twinkle: 0.5,
-  twist: 0.4,
-  haze: 0.3
+var canvas = document.getElementById('preview');
+var ctx = canvas.getContext('2d');
+var W, H, cx, cy, t = 0;
+var particles = [];
+var selectedColor = '#a78bfa';
+
+var params = {
+  count:80, density:0.6, speed:0.5,
+  scatter:60, lum:0.8, twinkle:0.5,
+  twist:0.4, haze:0.3
 };
 
 function resize() {
   W = canvas.width = window.innerWidth;
   H = canvas.height = window.innerHeight;
-  cx = W / 2;
-  cy = H * 0.35;
+  cx = W / 2; cy = H * 0.32;
   buildParticles();
 }
 
 function hexToRgb(hex) {
-  const r = parseInt(hex.slice(1,3),16);
-  const g = parseInt(hex.slice(3,5),16);
-  const b = parseInt(hex.slice(5,7),16);
-  return {r, g, b};
+  return {
+    r: parseInt(hex.slice(1,3), 16),
+    g: parseInt(hex.slice(3,5), 16),
+    b: parseInt(hex.slice(5,7), 16)
+  };
 }
 
 function buildParticles() {
   particles = [];
-  const n = params.count;
-  const rgb = hexToRgb(selectedColor);
-
-  for (let i = 0; i < n; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const rawR = Math.pow(Math.random(), 1 / params.density);
-    const r = rawR * params.scatter;
-    const armOffset = params.twist * rawR * Math.PI * 3;
-    const finalAngle = angle + armOffset;
-
+  var rgb = hexToRgb(selectedColor);
+  for (var i = 0; i < params.count; i++) {
+    var angle = Math.random() * Math.PI * 2;
+    var rawR = Math.pow(Math.random(), 1 / params.density);
+    var r = rawR * params.scatter;
+    var fa = angle + params.twist * rawR * Math.PI * 3;
     particles.push({
-      baseX: Math.cos(finalAngle) * r,
-      baseY: Math.sin(finalAngle) * r * 0.6,
-      r: Math.random() * 1.4 + 0.3,
-      speed: (Math.random() * 0.5 + 0.5) * params.speed * 0.008,
-      phaseOffset: Math.random() * Math.PI * 2,
+      baseX: Math.cos(fa) * r,
+      baseY: Math.sin(fa) * r * 0.6,
+      pr: Math.random() * 1.4 + 0.3,
+      speed: (Math.random()*0.5+0.5) * params.speed * 0.008,
       twinklePhase: Math.random() * Math.PI * 2,
       depth: Math.random(),
       rgb: {
@@ -455,171 +394,160 @@ function buildParticles() {
 function draw() {
   ctx.clearRect(0, 0, W, H);
 
-  // Nebula haze
   if (params.haze > 0.05) {
-    const rgb = hexToRgb(selectedColor);
-    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, params.scatter * 1.4);
-    g.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},${params.haze * 0.18})`);
-    g.addColorStop(0.4, `rgba(${rgb.r},${rgb.g},${rgb.b},${params.haze * 0.08})`);
+    var rgb0 = hexToRgb(selectedColor);
+    var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, params.scatter * 1.5);
+    g.addColorStop(0, 'rgba('+rgb0.r+','+rgb0.g+','+rgb0.b+','+(params.haze*0.18)+')');
+    g.addColorStop(0.5, 'rgba('+rgb0.r+','+rgb0.g+','+rgb0.b+','+(params.haze*0.07)+')');
     g.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.ellipse(cx, cy, params.scatter * 1.6, params.scatter, 0, 0, Math.PI * 2);
+    ctx.ellipse(cx, cy, params.scatter*1.9, params.scatter*1.1, 0, 0, Math.PI*2);
     ctx.fill();
   }
 
-  // Core glow
-  const rgb = hexToRgb(selectedColor);
-  const coreSize = params.scatter * 0.25 * params.density;
-  const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, coreSize);
-  cg.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},${params.lum * 0.6})`);
-  cg.addColorStop(0.5, `rgba(${rgb.r},${rgb.g},${rgb.b},${params.lum * 0.2})`);
+  var rgb1 = hexToRgb(selectedColor);
+  var cs = params.scatter * 0.28 * params.density;
+  var cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, cs);
+  cg.addColorStop(0, 'rgba('+rgb1.r+','+rgb1.g+','+rgb1.b+','+(params.lum*0.65)+')');
+  cg.addColorStop(0.5, 'rgba('+rgb1.r+','+rgb1.g+','+rgb1.b+','+(params.lum*0.2)+')');
   cg.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = cg;
-  ctx.beginPath();
-  ctx.arc(cx, cy, coreSize, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.beginPath(); ctx.arc(cx, cy, cs, 0, Math.PI*2); ctx.fill();
 
-  // Particles
-  for (const p of particles) {
-    const orbit = t * p.speed;
-    const x = cx + p.baseX * Math.cos(orbit) - p.baseY * Math.sin(orbit) * 0.5;
-    const y = cy + p.baseX * Math.sin(orbit) * 0.4 + p.baseY * Math.cos(orbit);
-
-    const twinkleFactor = params.twinkle > 0.01
-      ? 0.6 + 0.4 * Math.sin(t * (0.5 + p.depth) * params.twinkle * 3 + p.twinklePhase)
-      : 1;
-    const alpha = params.lum * twinkleFactor * (0.5 + p.depth * 0.5);
-
-    ctx.beginPath();
-    ctx.arc(x, y, p.r * (1 + p.depth * 0.5), 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(${p.rgb.r},${p.rgb.g},${p.rgb.b},${alpha})`;
-    ctx.fill();
-
-    // Bright core particle highlight
+  for (var i = 0; i < particles.length; i++) {
+    var p = particles[i];
+    var o = t * p.speed;
+    var x = cx + p.baseX*Math.cos(o) - p.baseY*Math.sin(o)*0.5;
+    var y = cy + p.baseX*Math.sin(o)*0.4 + p.baseY*Math.cos(o);
+    var tw = params.twinkle > 0.01
+      ? 0.6 + 0.4*Math.sin(t*(0.5+p.depth)*params.twinkle*3+p.twinklePhase) : 1;
+    var a = params.lum * tw * (0.5 + p.depth*0.5);
+    ctx.beginPath(); ctx.arc(x, y, p.pr*(1+p.depth*0.5), 0, Math.PI*2);
+    ctx.fillStyle = 'rgba('+p.rgb.r+','+p.rgb.g+','+p.rgb.b+','+a+')'; ctx.fill();
     if (p.depth > 0.7) {
-      ctx.beginPath();
-      ctx.arc(x, y, p.r * 0.4, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(255,255,255,${alpha * 0.7})`;
-      ctx.fill();
+      ctx.beginPath(); ctx.arc(x, y, p.pr*0.4, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(255,255,255,'+(a*0.7)+')'; ctx.fill();
     }
   }
 
-  t++;
-  animFrame = requestAnimationFrame(draw);
+  ctx.beginPath(); ctx.arc(cx, cy, 2, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,255,'+(params.lum*0.9)+')'; ctx.fill();
+
+  t++; requestAnimationFrame(draw);
 }
 
-// Slider bindings
-const sliders = [
-  ['count', 1], ['density', 2], ['speed', 2],
-  ['scatter', 0], ['lum', 2], ['twinkle', 2],
-  ['twist', 2], ['haze', 2]
+var sliderDefs = [
+  ['count',0],['density',2],['speed',2],['scatter',0],
+  ['lum',2],['twinkle',2],['twist',2],['haze',2]
 ];
 
-sliders.forEach(([name, dec]) => {
-  const sl = document.getElementById('sl-' + name);
-  const val = document.getElementById('val-' + name);
-  sl.addEventListener('input', () => {
-    const v = parseFloat(sl.value);
-    params[name] = v;
-    val.textContent = v.toFixed(dec);
-    buildParticles();
-  });
-});
-
-// Swatch bindings
-document.querySelectorAll('.swatch').forEach(sw => {
-  sw.addEventListener('click', () => {
-    document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
-    sw.classList.add('active');
-    selectedColor = sw.dataset.color;
-    buildParticles();
-  });
-});
-
-// Input validation for launch button
-function checkReady() {
-  const name = document.getElementById('star-name').value.trim();
-  const creator = document.getElementById('creator-name').value.trim();
-  const btn = document.getElementById('launch-btn');
-  if (name.length > 0 && creator.length > 0) {
-    btn.classList.add('ready');
-  } else {
-    btn.classList.remove('ready');
-  }
+for (var si = 0; si < sliderDefs.length; si++) {
+  (function(name, dec) {
+    var sl = document.getElementById('sl-'+name);
+    var vl = document.getElementById('val-'+name);
+    sl.addEventListener('input', function() {
+      params[name] = parseFloat(sl.value);
+      vl.textContent = params[name].toFixed(dec);
+      buildParticles();
+    });
+  })(sliderDefs[si][0], sliderDefs[si][1]);
 }
 
+var swatches = document.querySelectorAll('.swatch');
+for (var wi = 0; wi < swatches.length; wi++) {
+  (function(sw) {
+    sw.addEventListener('click', function() {
+      for (var j = 0; j < swatches.length; j++) swatches[j].classList.remove('active');
+      sw.classList.add('active');
+      selectedColor = sw.getAttribute('data-color');
+      buildParticles();
+    });
+  })(swatches[wi]);
+}
+
+function checkReady() {
+  var ok = document.getElementById('star-name').value.trim().length > 0
+    && document.getElementById('creator-name').value.trim().length > 0;
+  document.getElementById('launch-btn').classList.toggle('ready', ok);
+}
 document.getElementById('star-name').addEventListener('input', checkReady);
 document.getElementById('creator-name').addEventListener('input', checkReady);
 
-async function launchStar() {
-  const name = document.getElementById('star-name').value.trim();
-  const creator = document.getElementById('creator-name').value.trim();
-  const desc = document.getElementById('star-desc').value.trim();
+function randomId() {
+  var chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  var id = '';
+  for (var i = 0; i < 12; i++) id += chars[Math.floor(Math.random() * chars.length)];
+  return id;
+}
 
-  if (!name || !creator) {
-    document.getElementById('star-name').focus();
-    return;
-  }
+function launchStar() {
+  var name = document.getElementById('star-name').value.trim();
+  var creator = document.getElementById('creator-name').value.trim();
+  var desc = document.getElementById('star-desc').value.trim();
+  var errEl = document.getElementById('error-msg');
 
-  const btn = document.getElementById('launch-btn');
+  if (!name || !creator) { errEl.textContent = 'Please enter a star name and your name.'; return; }
+  errEl.textContent = '';
+
+  var btn = document.getElementById('launch-btn');
   document.getElementById('btn-text').textContent = 'Launching…';
   btn.disabled = true;
 
-  const starData = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
-    name,
-    creator,
+  var starData = {
+    id: randomId(),
+    name: name,
+    creator: creator,
     description: desc || 'A star without words — its light speaks for itself.',
     color: selectedColor,
-    physics: { ...params },
-    createdAt: Date.now(),
-    x: Math.random() * 0.85 + 0.075,
-    y: Math.random() * 0.7 + 0.1
+    physics: {
+      count: params.count,
+      density: params.density,
+      speed: params.speed,
+      scatter: params.scatter,
+      lum: params.lum,
+      twinkle: params.twinkle,
+      twist: params.twist,
+      haze: params.haze
+    },
+    x: Math.random()*0.82+0.09,
+    y: Math.random()*0.72+0.12
   };
 
-  try {
-    const storageKey = 'stellar-registry-stars';
-    let stars = [];
-
-    // Load existing
-    try {
-      const existing = await window.storage?.get(storageKey, true);
-      if (existing?.value) stars = JSON.parse(existing.value);
-    } catch(e) {}
-
-    // Keep last 200
-    stars = stars.slice(-199);
-    stars.push(starData);
-
-    await window.storage?.set(storageKey, JSON.stringify(stars), true);
-
-    // Show toast
+  fetch(SUPABASE_URL + '/rest/v1/stars', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Prefer': 'return=minimal'
+    },
+    body: JSON.stringify(starData)
+  }).then(function(res) {
+    if (!res.ok) {
+      return res.text().then(function(t) { throw new Error(t); });
+    }
     document.getElementById('toast-name').textContent = name;
-    const toast = document.getElementById('toast');
-    toast.classList.add('show');
-    btn.classList.add('fired');
-
-    setTimeout(() => {
-      toast.classList.remove('show');
+    document.getElementById('toast').classList.add('show');
+    setTimeout(function() {
+      document.getElementById('toast').classList.remove('show');
       document.getElementById('btn-text').textContent = '— Shoot Another Star —';
       btn.disabled = false;
       document.getElementById('star-name').value = '';
       document.getElementById('creator-name').value = '';
       document.getElementById('star-desc').value = '';
-      btn.classList.remove('ready', 'fired');
-    }, 2800);
-
-  } catch(e) {
+      btn.classList.remove('ready');
+    }, 3000);
+  }).catch(function(e) {
+    console.error(e);
+    errEl.textContent = 'Could not reach the registry: ' + e.message;
     document.getElementById('btn-text').textContent = '— Shoot the Star —';
     btn.disabled = false;
-    alert('Could not reach the registry. Please try again.');
-  }
+  });
 }
 
 window.addEventListener('resize', resize);
-resize();
-draw();
+resize(); draw();
 </script>
 </body>
 </html>

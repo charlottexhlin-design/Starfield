@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:;">
 <title>Stellar Registry — Observatory</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Crimson+Pro:ital,wght@0,300;0,400;1,300;1,400&display=swap');
@@ -17,12 +18,7 @@
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { width: 100%; height: 100%; overflow: hidden; background: #020408; cursor: none; }
-
-  canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-  }
+  canvas { display: block; width: 100%; height: 100%; }
 
   #cursor-ring {
     position: fixed;
@@ -40,7 +36,7 @@
     justify-content: space-between;
     padding: 20px 28px;
     z-index: 40;
-    background: linear-gradient(to bottom, rgba(2,4,8,0.7) 0%, transparent 100%);
+    background: linear-gradient(to bottom, rgba(2,4,8,0.75) 0%, transparent 100%);
     pointer-events: none;
   }
 
@@ -80,56 +76,57 @@
     font-size: 9px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: rgba(232,228,216,0.25);
+    color: rgba(232,228,216,0.2);
     z-index: 40;
     pointer-events: none;
-    transition: opacity 0.5s;
+    white-space: nowrap;
+    transition: opacity 2s;
   }
 
   #star-panel {
     position: fixed;
-    bottom: 0; left: 0; right: 0;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    width: 100%;
+    max-width: 540px;
     background: var(--surface);
     border-top: 0.5px solid var(--border);
-    padding: 24px 28px 32px;
+    border-left: 0.5px solid var(--border);
+    border-right: 0.5px solid var(--border);
+    padding: 20px 28px 36px;
     z-index: 60;
-    transform: translateY(100%);
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    max-width: 520px;
-    margin: 0 auto;
+    transition: transform 0.4s cubic-bezier(0.16,1,0.3,1);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
     border-radius: 20px 20px 0 0;
   }
 
-  #star-panel.open { transform: translateY(0); }
+  #star-panel.open { transform: translateX(-50%) translateY(0); }
 
   .panel-handle {
-    width: 36px;
-    height: 3px;
-    background: rgba(255,255,255,0.15);
+    width: 36px; height: 3px;
+    background: rgba(255,255,255,0.12);
     border-radius: 99px;
     margin: 0 auto 20px;
     cursor: pointer;
   }
 
   .panel-color-dot {
-    width: 10px;
-    height: 10px;
+    width: 9px; height: 9px;
     border-radius: 50%;
     display: inline-block;
     margin-right: 8px;
     vertical-align: middle;
-    box-shadow: 0 0 8px currentColor;
   }
 
   .panel-star-name {
     font-family: 'Crimson Pro', serif;
     font-style: italic;
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 300;
     color: var(--text);
     margin-bottom: 4px;
+    line-height: 1.1;
   }
 
   .panel-creator {
@@ -145,7 +142,7 @@
     font-size: 16px;
     font-weight: 300;
     line-height: 1.65;
-    color: rgba(232,228,216,0.8);
+    color: rgba(232,228,216,0.78);
     margin-bottom: 20px;
   }
 
@@ -168,12 +165,13 @@
     font-size: 8px;
     letter-spacing: 0.08em;
     color: var(--muted);
-    margin-bottom: 3px;
+    margin-bottom: 4px;
+    text-transform: uppercase;
   }
 
   .phys-val {
     font-family: 'Space Mono', monospace;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--text);
   }
 
@@ -202,7 +200,7 @@
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    gap: 16px;
+    gap: 20px;
     z-index: 200;
     transition: opacity 0.8s;
   }
@@ -210,49 +208,57 @@
   .loading-logo {
     font-family: 'Crimson Pro', serif;
     font-style: italic;
-    font-size: 28px;
+    font-size: 30px;
     font-weight: 300;
-    color: rgba(232,228,216,0.6);
+    color: rgba(232,228,216,0.55);
   }
 
-  .loading-dots {
-    display: flex; gap: 6px;
+  .loading-sub {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(232,228,216,0.2);
   }
+
+  .loading-dots { display: flex; gap: 8px; }
 
   .loading-dots span {
     width: 4px; height: 4px;
     border-radius: 50%;
     background: rgba(232,228,216,0.3);
-    animation: dot-pulse 1.4s infinite;
+    animation: dpulse 1.4s infinite;
   }
 
   .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
   .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
 
-  @keyframes dot-pulse {
-    0%, 80%, 100% { opacity: 0.3; transform: scale(1); }
-    40% { opacity: 1; transform: scale(1.3); }
+  @keyframes dpulse {
+    0%,80%,100% { opacity:0.3; transform:scale(1); }
+    40% { opacity:1; transform:scale(1.4); }
   }
 
-  #add-star-btn {
+  #new-star-toast {
     position: fixed;
-    bottom: 28px;
-    right: 28px;
-    background: rgba(4,6,15,0.8);
-    border: 0.5px solid rgba(255,255,255,0.15);
-    border-radius: 12px;
-    padding: 10px 16px;
+    top: 70px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(4,6,15,0.92);
+    border: 0.5px solid rgba(167,139,250,0.4);
+    border-radius: 99px;
+    padding: 8px 18px;
     font-family: 'Space Mono', monospace;
-    font-size: 9px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(232,228,216,0.6);
-    cursor: pointer;
-    z-index: 40;
-    transition: border-color 0.2s, color 0.2s;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: rgba(167,139,250,0.9);
+    z-index: 80;
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
+    pointer-events: none;
+    white-space: nowrap;
   }
 
-  #add-star-btn:hover { border-color: rgba(167,139,250,0.5); color: var(--text); }
+  #new-star-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
@@ -261,17 +267,18 @@
 
 <div id="loading-screen">
   <div class="loading-logo">Stellar Registry</div>
+  <div class="loading-sub">Connecting to the observatory</div>
   <div class="loading-dots"><span></span><span></span><span></span></div>
 </div>
 
 <div id="cursor-ring">
-  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="20" cy="20" r="18" stroke="rgba(232,228,216,0.3)" stroke-width="0.5"/>
-    <circle cx="20" cy="20" r="1.5" fill="rgba(232,228,216,0.6)"/>
-    <line x1="20" y1="2" x2="20" y2="8" stroke="rgba(232,228,216,0.3)" stroke-width="0.5"/>
-    <line x1="20" y1="32" x2="20" y2="38" stroke="rgba(232,228,216,0.3)" stroke-width="0.5"/>
-    <line x1="2" y1="20" x2="8" y2="20" stroke="rgba(232,228,216,0.3)" stroke-width="0.5"/>
-    <line x1="32" y1="20" x2="38" y2="20" stroke="rgba(232,228,216,0.3)" stroke-width="0.5"/>
+  <svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="22" cy="22" r="19" stroke="rgba(232,228,216,0.25)" stroke-width="0.5"/>
+    <circle cx="22" cy="22" r="1.5" fill="rgba(232,228,216,0.5)"/>
+    <line x1="22" y1="2" x2="22" y2="9" stroke="rgba(232,228,216,0.3)" stroke-width="0.5"/>
+    <line x1="22" y1="35" x2="22" y2="42" stroke="rgba(232,228,216,0.3)" stroke-width="0.5"/>
+    <line x1="2" y1="22" x2="9" y2="22" stroke="rgba(232,228,216,0.3)" stroke-width="0.5"/>
+    <line x1="35" y1="22" x2="42" y2="22" stroke="rgba(232,228,216,0.3)" stroke-width="0.5"/>
   </svg>
 </div>
 
@@ -281,31 +288,32 @@
   <div class="obs-tag">Observatory</div>
 </div>
 
-<div id="hint">Move your detector — click to identify a star</div>
+<div id="hint">Move your detector across the sky — click any star to identify it</div>
 
 <div id="star-panel">
   <div class="panel-handle" onclick="closePanel()"></div>
   <div class="close-btn" onclick="closePanel()">✕</div>
-  <div class="panel-star-name" id="p-name">—</div>
-  <div class="panel-creator" id="p-creator">by —</div>
+  <div class="panel-star-name" id="p-name"></div>
+  <div class="panel-creator" id="p-creator"></div>
   <div class="panel-desc" id="p-desc"></div>
   <div class="panel-physics" id="p-physics"></div>
 </div>
 
-<button id="add-star-btn" onclick="window.open('star-editor.html','_blank')">+ Add Your Star</button>
+<div id="new-star-toast"></div>
 
 <script>
-const canvas = document.getElementById('sky');
-const ctx = canvas.getContext('2d');
-let W, H;
-let mouse = { x: -999, y: -999 };
-let t = 0;
-let registeredStars = [];
-let bgStars = [];
-let shootingStars = [];
-let hoveredStar = null;
-let panelOpen = false;
-let loadInterval;
+var SUPABASE_URL = 'https://xdvztmxhfzeugxumdlwh.supabase.co';
+var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhkdnp0bXhoZnpldWd4dW1kbHdoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5MzA5MzMsImV4cCI6MjA5MjUwNjkzM30.t_KiA17-MRHvlHVoxBEHdvJW7KWfPk6Gwn8_ZyfIeTI';
+
+var canvas = document.getElementById('sky');
+var ctx = canvas.getContext('2d');
+var W, H, t = 0;
+var mouse = { x: -999, y: -999 };
+var registeredStars = [];
+var bgStars = [];
+var shootingStars = [];
+var hoveredStar = null;
+var panelOpen = false;
 
 function resize() {
   W = canvas.width = window.innerWidth;
@@ -315,125 +323,118 @@ function resize() {
 
 function buildBgStars() {
   bgStars = [];
-  const n = Math.floor(W * H / 1200);
-  for (let i = 0; i < n; i++) {
+  var n = Math.floor(W * H / 1100);
+  for (var i = 0; i < n; i++) {
     bgStars.push({
       x: Math.random() * W,
       y: Math.random() * H,
-      r: Math.random() * 0.9 + 0.2,
+      r: Math.random() * 0.85 + 0.15,
       phase: Math.random() * Math.PI * 2,
-      speed: Math.random() * 0.00008 + 0.00002,
-      drift: (Math.random() - 0.5) * 0.015,
-      brightness: Math.random() * 0.5 + 0.3
+      speed: Math.random() * 0.00007 + 0.00002,
+      drift: (Math.random()-0.5) * 0.012,
+      brightness: Math.random() * 0.45 + 0.25
     });
   }
 }
 
+function hexToRgb(hex) {
+  if (!hex || hex.length < 7) return {r:167,g:139,b:250};
+  return {
+    r: parseInt(hex.slice(1,3), 16),
+    g: parseInt(hex.slice(3,5), 16),
+    b: parseInt(hex.slice(5,7), 16)
+  };
+}
+
 function spawnShootingStar() {
-  if (Math.random() > 0.004) return;
-  const fromLeft = Math.random() > 0.5;
+  if (Math.random() > 0.003) return;
+  var fromLeft = Math.random() > 0.5;
   shootingStars.push({
-    x: fromLeft ? -20 : W + 20,
-    y: Math.random() * H * 0.5,
-    vx: fromLeft ? (3 + Math.random() * 4) : -(3 + Math.random() * 4),
-    vy: 1.5 + Math.random() * 2,
-    len: 80 + Math.random() * 120,
-    alpha: 1,
+    x: fromLeft ? -20 : W+20,
+    y: Math.random() * H * 0.55,
+    vx: fromLeft ? (2.5+Math.random()*3.5) : -(2.5+Math.random()*3.5),
+    vy: 1.2 + Math.random()*1.8,
+    len: 70 + Math.random()*110,
     life: 1
   });
 }
 
-function hexToRgb(hex) {
-  return {
-    r: parseInt(hex.slice(1,3),16),
-    g: parseInt(hex.slice(3,5),16),
-    b: parseInt(hex.slice(5,7),16)
-  };
+function getStarScreenPos(star) {
+  return { x: star.x * W, y: star.y * H };
 }
 
-function drawRegisteredStar(star, screenX, screenY, highlight) {
-  const rgb = hexToRgb(star.color || '#a78bfa');
-  const p = star.physics || {};
-  const scatter = (p.scatter || 60) * 0.12;
-  const lum = p.lum || 0.8;
-  const twinkle = p.twinkle || 0.5;
-  const density = p.density || 0.6;
+function getStarRadius(star) {
+  var scatter = star.physics ? (star.physics.scatter || 60) : 60;
+  return Math.max(scatter * 0.12 * 2.5, 28);
+}
 
-  const twinkleFactor = 0.7 + 0.3 * Math.sin(t * 0.015 * (1 + twinkle * 2) + (star._phase || 0));
-  const alpha = lum * twinkleFactor;
+function drawRegisteredStar(star, highlight) {
+  var pos = getStarScreenPos(star);
+  var sx = pos.x, sy = pos.y;
+  var rgb = hexToRgb(star.color);
+  var p = star.physics || {};
+  var scatter = (p.scatter || 60) * 0.12;
+  var lum = p.lum || 0.8;
+  var twinkle = p.twinkle || 0.5;
+  var density = p.density || 0.6;
+  var tw = 0.7 + 0.3 * Math.sin(t * 0.015 * (1 + twinkle*2) + (star._phase||0));
+  var alpha = lum * tw;
 
-  // Nebula haze
-  if (p.haze > 0.05) {
-    const ng = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, scatter * 2.5);
-    ng.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},${(p.haze||0.3) * 0.18 * alpha})`);
+  if ((p.haze||0) > 0.05) {
+    var ng = ctx.createRadialGradient(sx, sy, 0, sx, sy, scatter*2.8);
+    ng.addColorStop(0, 'rgba('+rgb.r+','+rgb.g+','+rgb.b+','+((p.haze||0.3)*0.16*alpha)+')');
     ng.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = ng;
     ctx.beginPath();
-    ctx.ellipse(screenX, screenY, scatter * 2.8, scatter * 1.8, 0, 0, Math.PI * 2);
+    ctx.ellipse(sx, sy, scatter*3.2, scatter*2, 0, 0, Math.PI*2);
     ctx.fill();
   }
 
-  // Mini particles
-  const particleCount = Math.min((p.count || 80), 60);
-  const starParticles = star._particles || [];
-  if (starParticles.length === 0) {
-    for (let i = 0; i < particleCount; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const rawR = Math.pow(Math.random(), 1 / density);
-      const r = rawR * scatter;
-      const armOffset = (p.twist || 0.4) * rawR * Math.PI * 3;
-      starParticles.push({
-        bx: Math.cos(angle + armOffset) * r,
-        by: Math.sin(angle + armOffset) * r * 0.6,
-        pr: Math.random() * 0.8 + 0.2,
-        speed: (Math.random() * 0.5 + 0.5) * (p.speed || 0.5) * 0.008,
-        phase: Math.random() * Math.PI * 2,
+  if (!star._particles) {
+    var pCount = Math.min(p.count||80, 55);
+    star._particles = [];
+    for (var i = 0; i < pCount; i++) {
+      var angle = Math.random()*Math.PI*2;
+      var rawR = Math.pow(Math.random(), 1/density);
+      var r = rawR * scatter;
+      var fa = angle + (p.twist||0.4)*rawR*Math.PI*3;
+      star._particles.push({
+        bx: Math.cos(fa)*r, by: Math.sin(fa)*r*0.6,
+        pr: Math.random()*0.8+0.2,
+        speed: (Math.random()*0.5+0.5)*(p.speed||0.5)*0.008,
         depth: Math.random()
       });
     }
-    star._particles = starParticles;
   }
 
-  for (const sp of starParticles) {
-    const orbit = t * sp.speed;
-    const px = screenX + sp.bx * Math.cos(orbit) - sp.by * Math.sin(orbit) * 0.5;
-    const py = screenY + sp.bx * Math.sin(orbit) * 0.4 + sp.by * Math.cos(orbit);
-    const a = alpha * (0.4 + sp.depth * 0.5) * twinkleFactor;
-    ctx.beginPath();
-    ctx.arc(px, py, sp.pr, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},${a})`;
-    ctx.fill();
+  for (var j = 0; j < star._particles.length; j++) {
+    var sp = star._particles[j];
+    var o = t * sp.speed;
+    var px = sx + sp.bx*Math.cos(o) - sp.by*Math.sin(o)*0.5;
+    var py = sy + sp.bx*Math.sin(o)*0.4 + sp.by*Math.cos(o);
+    var a = alpha * (0.4 + sp.depth*0.5) * tw;
+    ctx.beginPath(); ctx.arc(px, py, sp.pr, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba('+rgb.r+','+rgb.g+','+rgb.b+','+a+')'; ctx.fill();
   }
 
-  // Core glow
-  const cg = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, scatter * 0.8);
-  cg.addColorStop(0, `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha * 0.8})`);
-  cg.addColorStop(0.4, `rgba(${rgb.r},${rgb.g},${rgb.b},${alpha * 0.3})`);
+  var cg = ctx.createRadialGradient(sx, sy, 0, sx, sy, scatter*0.9);
+  cg.addColorStop(0, 'rgba('+rgb.r+','+rgb.g+','+rgb.b+','+(alpha*0.85)+')');
+  cg.addColorStop(0.4, 'rgba('+rgb.r+','+rgb.g+','+rgb.b+','+(alpha*0.3)+')');
   cg.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.fillStyle = cg;
-  ctx.beginPath();
-  ctx.arc(screenX, screenY, scatter * 0.9, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.beginPath(); ctx.arc(sx, sy, scatter*0.95, 0, Math.PI*2); ctx.fill();
 
-  // White hot center
-  ctx.beginPath();
-  ctx.arc(screenX, screenY, 1.5, 0, Math.PI * 2);
-  ctx.fillStyle = `rgba(255,255,255,${alpha * 0.9})`;
-  ctx.fill();
+  ctx.beginPath(); ctx.arc(sx, sy, 1.8, 0, Math.PI*2);
+  ctx.fillStyle = 'rgba(255,255,255,'+(alpha*0.95)+')'; ctx.fill();
 
-  // Hover ring
   if (highlight) {
-    ctx.beginPath();
-    ctx.arc(screenX, screenY, scatter * 2.2, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(${rgb.r},${rgb.g},${rgb.b},0.4)`;
-    ctx.lineWidth = 0.5;
-    ctx.stroke();
-
-    // Name label above
+    ctx.beginPath(); ctx.arc(sx, sy, getStarRadius(star), 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba('+rgb.r+','+rgb.g+','+rgb.b+',0.45)';
+    ctx.lineWidth = 0.5; ctx.stroke();
     ctx.font = '11px "Space Mono", monospace';
     ctx.textAlign = 'center';
-    ctx.fillStyle = `rgba(232,228,216,0.7)`;
-    ctx.fillText(star.name, screenX, screenY - scatter * 2.5 - 6);
+    ctx.fillStyle = 'rgba(232,228,216,0.75)';
+    ctx.fillText(star.name, sx, sy - getStarRadius(star) - 8);
   }
 }
 
@@ -441,126 +442,104 @@ function draw() {
   ctx.fillStyle = '#020408';
   ctx.fillRect(0, 0, W, H);
 
-  // Background stars
-  for (const s of bgStars) {
+  for (var i = 0; i < bgStars.length; i++) {
+    var s = bgStars[i];
     s.x += s.drift;
-    if (s.x > W + 2) s.x = -2;
-    if (s.x < -2) s.x = W + 2;
-
-    const tw = 0.6 + 0.4 * Math.sin(t * s.speed * 60 + s.phase);
-    const a = s.brightness * tw;
-    ctx.beginPath();
-    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-    ctx.fillStyle = `rgba(232,228,216,${a})`;
-    ctx.fill();
+    if (s.x > W+2) s.x = -2;
+    if (s.x < -2) s.x = W+2;
+    var tw = 0.55 + 0.45*Math.sin(t*s.speed*60+s.phase);
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(232,228,216,'+(s.brightness*tw)+')'; ctx.fill();
   }
 
-  // Shooting stars
   spawnShootingStar();
-  for (let i = shootingStars.length - 1; i >= 0; i--) {
-    const ss = shootingStars[i];
-    ss.x += ss.vx;
-    ss.y += ss.vy;
-    ss.life -= 0.018;
-    ss.alpha = ss.life;
-
-    if (ss.life <= 0) { shootingStars.splice(i, 1); continue; }
-
-    const trail = ctx.createLinearGradient(
-      ss.x - ss.vx * (ss.len / Math.hypot(ss.vx, ss.vy)),
-      ss.y - ss.vy * (ss.len / Math.hypot(ss.vx, ss.vy)),
-      ss.x, ss.y
+  for (var k = shootingStars.length-1; k >= 0; k--) {
+    var ss = shootingStars[k];
+    ss.x += ss.vx; ss.y += ss.vy; ss.life -= 0.016;
+    if (ss.life <= 0) { shootingStars.splice(k,1); continue; }
+    var spd = Math.hypot(ss.vx, ss.vy);
+    var trail = ctx.createLinearGradient(
+      ss.x - ss.vx*(ss.len/spd), ss.y - ss.vy*(ss.len/spd), ss.x, ss.y
     );
     trail.addColorStop(0, 'rgba(232,228,216,0)');
-    trail.addColorStop(1, `rgba(232,228,216,${ss.alpha * 0.8})`);
+    trail.addColorStop(1, 'rgba(232,228,216,'+(ss.life*0.75)+')');
     ctx.beginPath();
-    ctx.moveTo(ss.x - ss.vx * (ss.len / Math.hypot(ss.vx, ss.vy)),
-               ss.y - ss.vy * (ss.len / Math.hypot(ss.vx, ss.vy)));
+    ctx.moveTo(ss.x - ss.vx*(ss.len/spd), ss.y - ss.vy*(ss.len/spd));
     ctx.lineTo(ss.x, ss.y);
-    ctx.strokeStyle = trail;
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
+    ctx.strokeStyle = trail; ctx.lineWidth = 1.2; ctx.stroke();
   }
 
-  // Registered stars
   hoveredStar = null;
-  for (const star of registeredStars) {
-    const sx = star.x * W;
-    const sy = star.y * H;
-    const dist = Math.hypot(mouse.x - sx, mouse.y - sy);
-    const scatter = ((star.physics?.scatter || 60) * 0.12) * 2.2;
-    const isHover = dist < Math.max(scatter, 30) && !panelOpen;
+  for (var m = 0; m < registeredStars.length; m++) {
+    var star = registeredStars[m];
+    var pos = getStarScreenPos(star);
+    var dist = Math.hypot(mouse.x-pos.x, mouse.y-pos.y);
+    var isHover = dist < getStarRadius(star) && !panelOpen;
     if (isHover) hoveredStar = star;
-    drawRegisteredStar(star, sx, sy, isHover);
+    drawRegisteredStar(star, isHover);
   }
 
-  // Update cursor ring
-  const ring = document.getElementById('cursor-ring');
-  ring.style.left = mouse.x + 'px';
-  ring.style.top = mouse.y + 'px';
+  var ring = document.getElementById('cursor-ring');
+  ring.style.left = mouse.x+'px';
+  ring.style.top = mouse.y+'px';
+  ring.style.opacity = hoveredStar ? '1' : '0.35';
 
-  if (hoveredStar) {
-    ring.style.opacity = '0.8';
-    document.body.style.cursor = 'none';
-  } else {
-    ring.style.opacity = '0.4';
-  }
-
-  t++;
-  requestAnimationFrame(draw);
+  t++; requestAnimationFrame(draw);
 }
 
-// Mouse / touch
-document.addEventListener('mousemove', e => {
-  mouse.x = e.clientX;
-  mouse.y = e.clientY;
-});
+document.addEventListener('mousemove', function(e) { mouse.x = e.clientX; mouse.y = e.clientY; });
+document.addEventListener('click', function() { if (!panelOpen && hoveredStar) openPanel(hoveredStar); });
 
-document.addEventListener('click', e => {
-  if (panelOpen) return;
-  if (hoveredStar) openPanel(hoveredStar);
-});
+document.addEventListener('touchmove', function(e) {
+  mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY;
+}, { passive:true });
 
-// Touch for mobile
-document.addEventListener('touchmove', e => {
-  mouse.x = e.touches[0].clientX;
-  mouse.y = e.touches[0].clientY;
-}, { passive: true });
-
-document.addEventListener('touchend', e => {
-  const tx = e.changedTouches[0].clientX;
-  const ty = e.changedTouches[0].clientY;
-  for (const star of registeredStars) {
-    const sx = star.x * W;
-    const sy = star.y * H;
-    const dist = Math.hypot(tx - sx, ty - sy);
-    if (dist < 50) { openPanel(star); return; }
+document.addEventListener('touchend', function(e) {
+  var tx = e.changedTouches[0].clientX;
+  var ty = e.changedTouches[0].clientY;
+  if (panelOpen) { closePanel(); return; }
+  for (var i = 0; i < registeredStars.length; i++) {
+    var pos = getStarScreenPos(registeredStars[i]);
+    if (Math.hypot(tx-pos.x, ty-pos.y) < 55) { openPanel(registeredStars[i]); return; }
   }
-  if (panelOpen) closePanel();
 });
+
+function makeChip(label, value) {
+  var div = document.createElement('div');
+  div.className = 'phys-chip';
+  var lDiv = document.createElement('div');
+  lDiv.className = 'phys-label';
+  lDiv.textContent = label;
+  var vDiv = document.createElement('div');
+  vDiv.className = 'phys-val';
+  vDiv.textContent = value;
+  div.appendChild(lDiv);
+  div.appendChild(vDiv);
+  return div;
+}
 
 function openPanel(star) {
   panelOpen = true;
-  const rgb = hexToRgb(star.color || '#a78bfa');
-  const p = star.physics || {};
-
+  var p = star.physics || {};
   document.getElementById('p-name').textContent = star.name;
-  document.getElementById('p-creator').innerHTML =
-    `<span class="panel-color-dot" style="background:${star.color};color:${star.color}"></span>` +
-    `by ${star.creator}`;
-  document.getElementById('p-desc').textContent = star.description;
 
-  const phys = document.getElementById('p-physics');
-  phys.innerHTML = [
-    ['Particles', Math.round(p.count || 80)],
-    ['Speed', (p.speed||0.5).toFixed(2)],
-    ['Scatter', Math.round(p.scatter||60)],
-    ['Density', (p.density||0.6).toFixed(2)],
-  ].map(([l, v]) => `
-    <div class="phys-chip">
-      <div class="phys-label">${l}</div>
-      <div class="phys-val">${v}</div>
-    </div>`).join('');
+  var creator = document.getElementById('p-creator');
+  creator.innerHTML = '';
+  var dot = document.createElement('span');
+  dot.className = 'panel-color-dot';
+  dot.style.background = star.color;
+  dot.style.boxShadow = '0 0 6px ' + star.color;
+  creator.appendChild(dot);
+  creator.appendChild(document.createTextNode('by ' + star.creator));
+
+  document.getElementById('p-desc').textContent = star.description || '';
+
+  var phys = document.getElementById('p-physics');
+  phys.innerHTML = '';
+  phys.appendChild(makeChip('Particles', Math.round(p.count||80)));
+  phys.appendChild(makeChip('Speed', (p.speed||0.5).toFixed(2)));
+  phys.appendChild(makeChip('Scatter', Math.round(p.scatter||60)));
+  phys.appendChild(makeChip('Density', (p.density||0.6).toFixed(2)));
 
   document.getElementById('star-panel').classList.add('open');
   document.getElementById('hint').style.opacity = '0';
@@ -572,48 +551,108 @@ function closePanel() {
   document.getElementById('hint').style.opacity = '1';
 }
 
-// Load stars from storage
-async function loadStars() {
-  try {
-    const result = await window.storage?.get('stellar-registry-stars', true);
-    if (result?.value) {
-      const loaded = JSON.parse(result.value);
-      // Initialize phases
-      loaded.forEach(s => {
-        if (!s._phase) s._phase = Math.random() * Math.PI * 2;
-      });
-      registeredStars = loaded;
-      const cnt = registeredStars.length;
-      document.getElementById('star-count').textContent =
-        cnt > 0 ? `${cnt} star${cnt !== 1 ? 's' : ''} registered` : 'No stars yet';
-    }
-  } catch(e) {}
+function showNewStarToast(name) {
+  var el = document.getElementById('new-star-toast');
+  el.textContent = '\u2736 ' + name + ' just appeared in the sky';
+  el.classList.add('show');
+  setTimeout(function() { el.classList.remove('show'); }, 3500);
 }
 
-// Hide loading screen
+function updateCount() {
+  var n = registeredStars.length;
+  document.getElementById('star-count').textContent =
+    n > 0 ? n + ' star' + (n!==1?'s':'') + ' in the registry' : '';
+}
+
+function loadStars() {
+  fetch(SUPABASE_URL + '/rest/v1/stars?select=*&order=created_at.asc', {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY
+    }
+  }).then(function(res) {
+    if (!res.ok) throw new Error('fetch failed');
+    return res.json();
+  }).then(function(data) {
+    registeredStars = data.map(function(s) {
+      s._phase = Math.random() * Math.PI * 2;
+      return s;
+    });
+    updateCount();
+  }).catch(function(e) { console.error('Load failed:', e); });
+}
+
+function connectRealtime() {
+  var wsUrl = SUPABASE_URL.replace('https://', 'wss://') +
+    '/realtime/v1/websocket?apikey=' + SUPABASE_KEY + '&vsn=1.0.0';
+  var ws;
+  var heartbeatTimer;
+
+  function connect() {
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = function() {
+      ws.send(JSON.stringify({
+        topic: 'realtime:public:stars',
+        event: 'phx_join',
+        payload: {
+          config: {
+            broadcast: { self: false },
+            presence: { key: '' },
+            postgres_changes: [{ event: 'INSERT', schema: 'public', table: 'stars' }]
+          }
+        },
+        ref: '1'
+      }));
+      heartbeatTimer = setInterval(function() {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ topic: 'phoenix', event: 'heartbeat', payload: {}, ref: null }));
+        }
+      }, 25000);
+    };
+
+    ws.onmessage = function(msg) {
+      try {
+        var data = JSON.parse(msg.data);
+        if (data.event === 'postgres_changes' &&
+            data.payload && data.payload.data && data.payload.data.type === 'INSERT') {
+          var newStar = data.payload.data.record;
+          newStar._phase = Math.random() * Math.PI * 2;
+          registeredStars.push(newStar);
+          updateCount();
+          showNewStarToast(newStar.name);
+        }
+      } catch(e) {}
+    };
+
+    ws.onclose = function() {
+      clearInterval(heartbeatTimer);
+      setTimeout(connect, 5000);
+    };
+
+    ws.onerror = function() { ws.close(); };
+  }
+
+  connect();
+}
+
 function hideLoading() {
-  const ls = document.getElementById('loading-screen');
+  var ls = document.getElementById('loading-screen');
   ls.style.opacity = '0';
-  setTimeout(() => ls.style.display = 'none', 800);
+  setTimeout(function() { ls.style.display='none'; }, 800);
 }
 
 window.addEventListener('resize', resize);
-resize();
-draw();
+resize(); draw();
 
-// Load after short delay so canvas is running
-setTimeout(async () => {
-  await loadStars();
+setTimeout(function() {
+  loadStars();
+  connectRealtime();
   hideLoading();
-  // Refresh every 15 seconds
-  setInterval(loadStars, 15000);
-}, 1000);
-
-// Hint fade
-setTimeout(() => {
-  document.getElementById('hint').style.transition = 'opacity 1.5s';
-  document.getElementById('hint').style.opacity = '0';
-}, 6000);
+  setTimeout(function() {
+    document.getElementById('hint').style.opacity = '0';
+  }, 7000);
+}, 800);
 </script>
 </body>
 </html>
